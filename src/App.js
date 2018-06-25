@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { formatDistance } from "date-fns";
+import { formatDistance, addYears } from "date-fns";
 import { Navbar, Nav, NavItem, ListGroup, ListGroupItem, Grid, Row, Col, Jumbotron, Button } from 'react-bootstrap';
 import linkifyStr from 'linkifyjs/string';
 
@@ -68,7 +68,6 @@ class App extends Component {
 }
 
 function Welcome(props) {
-  console.log("welcome", props)
   if (props.gapiSignedIn) {
     return props.children || []
   } else {
@@ -123,7 +122,7 @@ class Display extends Component {
   }
 
   componentDidMount() {
-    this.getItems()
+    this.tick()
     this.timerID = setInterval(
       () => this.getItems(),
       1000 * 60 * 5
@@ -134,17 +133,31 @@ class Display extends Component {
     clearInterval(this.timerID);
   }
 
-  async getItems() {
-    // for (calendar in await window.gapi.client.calendar.events.list)
-    const {result} = await window.gapi.client.calendar.events.list({
-      'calendarId': 'primary',
-      'timeMin': (new Date()).toISOString(),
-      'showDeleted': false,
-      'singleEvents': true,
-      'maxResults': 50,
-      'orderBy': 'startTime'
+  async getCalendars() {
+    const { result: { items } } = await window.gapi.client.calendar.calendarList.list({
+      minAccessRole: "reader"
     })
-    this.setState({events: result.items})
+    return items
+  }
+
+  async tick() {
+    const events = {}
+    for (const calendar of await this.getCalendars()) {
+      const { result } = await window.gapi.client.calendar.events.list({
+        calendarId: calendar.id,
+        timeMin: (new Date()).toISOString(),
+        timeMax: addYears(new Date(), 1).toISOString(),
+        showDeleted: false,
+        singleEvents: true,
+        maxResults: 100,
+        orderBy: 'startTime'
+      });
+      for (const item of result.items) {
+        events[item.id] = item
+      }
+    }
+
+    this.setState({events: Object.values(events).sort(sortEvents)})
   }
   
   render() {
@@ -155,6 +168,9 @@ class Display extends Component {
     )
   }
 }
+
+const sortEvents = (a,b) => +new Date(a.start.date || a.start.dateTime).getTime() - +new Date(b.start.date || b.start.dateTime).getTime()
+
 
 class Event extends Component {
   constructor() {

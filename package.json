@@ -16,6 +16,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "deploy": "react-scripts build && aws s3 sync --acl=public-read build/ s3://deadlines.jacobelder.com && aws cloudfront create-invalidation --distribution-id E3VGVYWT3PMDRU --paths=/"
+    "deploy": "react-scripts build && aws s3 sync --acl=public-read build/ s3://deadlines.jacobelder.com && npm run cloudfront-invalidate",
+    "cf-invalidate": "aws cloudfront create-invalidation --distribution-id E3VGVYWT3PMDRU --paths /index.html /"
   }
 }

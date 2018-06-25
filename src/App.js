@@ -84,7 +84,7 @@ class Display extends Component {
     this.getItems()
     this.timerID = setInterval(
       () => this.getItems(),
-      30 * 1000
+      1000 * 60 * 5
     );
   }
 

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { formatDistance } from "date-fns";
 
 // Array of API discovery doc URLs for APIs used by the quickstart
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
@@ -43,13 +44,11 @@ class App extends Component {
 
   render() {
     return (
-      <div className="App">
-        <LoadingSpinner gapiReady={this.state.gapiReady}>
-          <Session gapiSignedIn={this.state.gapiSignedIn}>
-            <Display/>
-          </Session>
-        </LoadingSpinner>
-      </div>     
+      <LoadingSpinner gapiReady={this.state.gapiReady}>
+        <Session gapiSignedIn={this.state.gapiSignedIn}>
+          <Display/>
+        </Session>
+      </LoadingSpinner>
     )
   }
 }
@@ -78,25 +77,78 @@ function Session(props) {
 class Display extends Component {
   constructor() {
     super()
-    this.state = {}
+    this.state = {events: []}
   }
 
-  async componentDidMount() {
-    const response = await window.gapi.client.calendar.events.list({
+  componentDidMount() {
+    this.getItems()
+    this.timerID = setInterval(
+      () => this.getItems(),
+      30 * 1000
+    );
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  async getItems() {
+    const {result} = await window.gapi.client.calendar.events.list({
       'calendarId': 'primary',
       'timeMin': (new Date()).toISOString(),
       'showDeleted': false,
       'singleEvents': true,
-      'maxResults': 100,
+      'maxResults': 10,
       'orderBy': 'startTime'
     })
-    this.setState({response})
+    console.log(result)
+    this.setState({events: result.items})
   }
   
   render() {
     return (
+      <pre>
+        {this.state.events.map(event => <Event key={event.id} {...event} />)}
+      </pre>
+    )
+  }
+}
+
+class Event extends Component {
+  constructor() {
+    super()
+    this.state = {}
+  }
+
+  componentDidMount() {
+    this.tick()
+    this.timerID = setInterval(
+      () => this.tick(),
+      1000
+    );
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timerID);
+  }
+
+  tick() {
+    this.setState({
+      distance: this.getDistance()
+    });
+  }
+
+  getDistance() {
+    return formatDistance(new Date(this.props.start.dateTime || this.props.start.date), new Date(), {includeSeconds: true})
+  }
+
+  render() {
+    return (
       <div>
-        {JSON.stringify(this.state)}
+        <div>{this.state.distance}</div>
+        <div>{this.props.summary}</div>
+        <div>{this.props.location}</div>
+        {/* {JSON.stringify(this.props, null, 2)} */}
       </div>
     )
   }

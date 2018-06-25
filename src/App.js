@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import { formatDistance } from "date-fns";
+import { Button, Navbar, Nav, ListGroup, ListGroupItem, Grid, Row, Col } from 'react-bootstrap';
+import linkifyStr from 'linkifyjs/string';
 
 // Array of API discovery doc URLs for APIs used by the quickstart
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
@@ -44,11 +46,20 @@ class App extends Component {
 
   render() {
     return (
+      <div>
+      <Navbar>
+        <Navbar.Header>
+          <Navbar.Brand>
+            Deadlines
+          </Navbar.Brand>
+        </Navbar.Header>
+      </Navbar>
       <LoadingSpinner gapiReady={this.state.gapiReady}>
         <Session gapiSignedIn={this.state.gapiSignedIn}>
           <Display/>
         </Session>
       </LoadingSpinner>
+      </div>
     )
   }
 }
@@ -65,12 +76,12 @@ function Session(props) {
   if (props.gapiSignedIn) {
     return (
       <div>
-      <button onClick={window.gapi.auth2.getAuthInstance().signOut}>Sign Out</button>
+      <Button onClick={window.gapi.auth2.getAuthInstance().signOut}>Sign Out</Button>
       {props.children}
       </div>
     )
   } else {
-    return <button onClick={window.gapi.auth2.getAuthInstance().signIn}>Authorize</button>
+    return <Button bsStyle="primary" onClick={window.gapi.auth2.getAuthInstance().signIn}>Sign In</Button>
   }
 }
 
@@ -107,9 +118,9 @@ class Display extends Component {
   
   render() {
     return (
-      <pre>
+      <ListGroup>
         {this.state.events.map(event => <Event key={event.id} {...event} />)}
-      </pre>
+      </ListGroup>
     )
   }
 }
@@ -142,14 +153,32 @@ class Event extends Component {
     return formatDistance(new Date(this.props.start.dateTime || this.props.start.date), new Date(), {includeSeconds: true})
   }
 
+  getText() {
+    return {
+      __html: linkifyStr(this.props.location, { nl2br: true })
+    }
+  }
+
   render() {
     return (
-      <div>
-        <div>{this.state.distance}</div>
-        <div>{this.props.summary}</div>
-        <div>{this.props.location}</div>
+      <ListGroupItem>
+        <Grid>
+          <Row>
+            <Col xs={6} md={4}>
+              {this.props.summary}
+            </Col>
+            <Col xs={3} md={2}>
+              {this.state.distance}
+            </Col>
+          </Row>
+          { !!this.props.location &&
+            <Row>
+              <div dangerouslySetInnerHTML={this.getText()}/>
+            </Row>
+          }
+        </Grid>
         {/* {JSON.stringify(this.props, null, 2)} */}
-      </div>
+      </ListGroupItem>
     )
   }
 }

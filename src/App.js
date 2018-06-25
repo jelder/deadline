@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { formatDistance } from "date-fns";
-import { Button, Navbar, Nav, ListGroup, ListGroupItem, Grid, Row, Col } from 'react-bootstrap';
+import { Navbar, Nav, NavItem, ListGroup, ListGroupItem, Grid, Row, Col, Jumbotron, Button } from 'react-bootstrap';
 import linkifyStr from 'linkifyjs/string';
 
 // Array of API discovery doc URLs for APIs used by the quickstart
@@ -46,21 +46,47 @@ class App extends Component {
 
   render() {
     return (
-      <div>
+      <div className="container">
       <Navbar>
         <Navbar.Header>
           <Navbar.Brand>
             Deadlines
           </Navbar.Brand>
         </Navbar.Header>
+          <Nav pullRight={true}>
+            <LoadingSpinner gapiReady={this.state.gapiReady}>
+              <NavSession gapiSignedIn={this.state.gapiSignedIn}/>
+            </LoadingSpinner>
+          </Nav>
       </Navbar>
-      <LoadingSpinner gapiReady={this.state.gapiReady}>
-        <Session gapiSignedIn={this.state.gapiSignedIn}>
-          <Display/>
-        </Session>
-      </LoadingSpinner>
+      <Welcome {...this.state}>
+        <LoadingSpinner {...this.state}><Display/></LoadingSpinner>
+      </Welcome>
       </div>
     )
+  }
+}
+
+function Welcome(props) {
+  console.log("welcome", props)
+  if (props.gapiSignedIn) {
+    return props.children || []
+  } else {
+    return (
+      <Jumbotron>
+        <h1>Got Deadlines?</h1>
+        <p>
+          Deadlines is an alternative view for Google Calendars. It eschews the classic calendar grid in favor of counting down the moments until each thing is due.
+        </p>
+        <p>
+          This site doesn't track you or store your data. Made with ♡ by <a href="http://jacobelder.com">Jacob Elder</a>.
+        </p>
+        <hr/>
+        <LoadingSpinner {...props}>
+          <Button bsStyle="primary" onClick={signIn}>Sign In</Button>
+        </LoadingSpinner>
+      </Jumbotron>
+    )  
   }
 }
 
@@ -72,17 +98,20 @@ function LoadingSpinner(props) {
   }
 }
 
-function Session(props) {
+function NavSession(props) {
   if (props.gapiSignedIn) {
-    return (
-      <div>
-      <Button onClick={window.gapi.auth2.getAuthInstance().signOut}>Sign Out</Button>
-      {props.children}
-      </div>
-    )
+    return <NavItem onClick={signOut}>Sign Out</NavItem>
   } else {
-    return <Button bsStyle="primary" onClick={window.gapi.auth2.getAuthInstance().signIn}>Sign In</Button>
+    return <NavItem onClick={signIn}>Sign In</NavItem>
   }
+}
+
+function signIn() {
+  return window.gapi.auth2.getAuthInstance().signIn()
+}
+
+function signOut() {
+  return window.gapi.auth2.getAuthInstance().signOut()
 }
 
 class Display extends Component {

@@ -138,10 +138,9 @@ class Display extends Component {
       'timeMin': (new Date()).toISOString(),
       'showDeleted': false,
       'singleEvents': true,
-      'maxResults': 10,
+      'maxResults': 50,
       'orderBy': 'startTime'
     })
-    console.log(result)
     this.setState({events: result.items})
   }
   

@@ -107,7 +107,9 @@ function NavSession(props) {
 }
 
 function signIn() {
-  return window.gapi.auth2.getAuthInstance().signIn()
+  const options = new window.gapi.auth2.SigninOptionsBuilder();
+  options.setPrompt('select_account');
+  return window.gapi.auth2.getAuthInstance().signIn(options)
 }
 
 function signOut() {
@@ -133,6 +135,7 @@ class Display extends Component {
   }
 
   async getItems() {
+    // for (calendar in await window.gapi.client.calendar.events.list)
     const {result} = await window.gapi.client.calendar.events.list({
       'calendarId': 'primary',
       'timeMin': (new Date()).toISOString(),
